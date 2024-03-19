@@ -113,7 +113,7 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
     python examples/sqlalchemy_async.py
     ```
 
-    Note that each of the script starts off with a `CREATE EXTENSION pgvector;` command, which will install the pgvector extension into the database. Once you run that once, you do not need to run it again.
+    Note that each of the script starts off with a `CREATE EXTENSION vector;` command, which will install the pgvector extension into the database. Once you run that once, you do not need to run it again.
 
 ## Example scripts
 
