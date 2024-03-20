@@ -14,9 +14,9 @@ urlFragment: azure-postgres-pgvector-python
 
 # PostgreSQL + pgvector on Azure
 
-This repository makes it easy to deploy a PostgreSQL Flexible Server to Azure with the [pgvector](https://pgvector.dev) extension installed. The pgvector extension provides a vector similarity search engine for PostgreSQL, allowing you to perform similarity searches on your data using vector embeddings.
+This repository makes it easy to deploy a PostgreSQL Flexible Server to Azure with the [pgvector](https://github.com/pgvector/pgvector) extension installed. The pgvector extension provides a vector similarity search engine for PostgreSQL, allowing you to perform similarity searches on your data using vector embeddings.
 
-The repository contains infrastructure-as-code (Bicep) to deploy an Azure PostgreSQL Flexible Server with  pgvector extension enabled, password authentication disabled, and Entra (Active Directory) authentication enabled. The repository also contains example Python scripts to demonstrate how to use pgvector.
+The repository contains infrastructure-as-code (Bicep) to deploy an Azure PostgreSQL Flexible Server with pgvector extension enabled, password authentication disabled, and Entra (Active Directory) authentication enabled. The repository also contains example Python scripts to demonstrate how to use pgvector.
 
 Table of contents:
 
@@ -30,8 +30,7 @@ Table of contents:
 ## Opening this project
 
 You have a few options for setting up this project.
-The easiest way to get started is GitHub Codespaces, since it will setup all the tools for you,
-but you can also [set it up locally](#local-environment) if desired.
+The easiest way to get started is GitHub Codespaces, since it will setup all the tools for you, but you can also [set it up locally](#local-environment) if desired.
 
 ### GitHub Codespaces
 
@@ -45,9 +44,9 @@ Once the codespace opens (this may take several minutes), open a terminal window
 
 A related option is VS Code Dev Containers, which will open the project in your local VS Code using the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
 
-1. Start Docker Desktop (install it if not already installed)
+1. Start Docker Desktop (install it if not already installed).
 1. Open the project:
-    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/azure-samples/azure-postgres-pgvector-python)
+    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/azure-samples/azure-postgres-pgvector-python).
 1. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
 
 ### Local environment
@@ -101,7 +100,7 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
 
     This will create a new resource group, and create the PostgreSQL Flexible server inside that group.
 
-1. Once the deployment is complete, run this command to copy the `azd` environment variables into your local `.env`:
+1. The example Python scripts look for configuration variables from a `.env` file located in the directory from where you invoke the scripts. You can easily create a file with the correct variables for your PostgreSQL server by running this command that copies the `azd` environment variables into your local `.env`:
 
     ```shell
     azd env get-values > .env
@@ -113,11 +112,11 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
     python examples/sqlalchemy_async.py
     ```
 
-    Note that each of the script starts off with a `CREATE EXTENSION vector;` command, which will install the pgvector extension into the database. Once you run that once, you do not need to run it again.
+    Note that each of the script starts off with a `CREATE EXTENSION vector;` command, which will install the pgvector extension into the database. Once you run that once in a given database, you do not need to run it again for that particular database.
 
 ## Example scripts
 
-The `examples` folder contains example Python scripts that demonstrate how to use pgvector,based on the [pgvector sample code](https://github.com/pgvector/pgvector-python).
+The `examples` folder contains example Python scripts that demonstrate how to use pgvector, based on the [pgvector sample code](https://github.com/pgvector/pgvector-python).
 
 | Script | Dependencies | Description |
 |--------|--------------|-------------|
