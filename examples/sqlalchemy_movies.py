@@ -42,14 +42,17 @@ if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
 
 engine = create_engine(DATABASE_URI, echo=False)
 
+# Create pgvector extension
+with engine.begin() as conn:
+    conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
+    
 # Create tables in database
 Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
 
 # Insert data and issue queries
 with Session(engine) as session:
-    session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-
+    # Define HNSW index to support cosine similarity search through the vector_cosine_ops access method. The SQL operator for cosine distance is written as <=>.
     index = Index(
         "hnsw_index",
         Movie.title_vector,
@@ -58,6 +61,7 @@ with Session(engine) as session:
         postgresql_ops={"title_vector": "vector_cosine_ops"},
     )
 
+    # Create the HNSW index
     index.create(engine)
 
     # Insert the movies from the JSON file
@@ -70,7 +74,7 @@ with Session(engine) as session:
             session.add(movie)
         session.commit()
 
-    # Query the database
+    # Query for our target movie, the one whose title matches "Winnie the Pooh"
     query = select(Movie).where(Movie.title == "Winnie the Pooh")
     target_movie = session.execute(query).scalars().first()
     if target_movie is None:
@@ -78,8 +82,8 @@ with Session(engine) as session:
         exit(1)
 
     # Find the 5 most similar movies to "Winnie the Pooh"
-    closest = session.scalars(
+    most_similars = session.scalars(
         select(Movie).order_by(Movie.title_vector.cosine_distance(target_movie.title_vector)).limit(5)
     )
-    for movie in closest:
-        print(movie.title)
+    for similar_movie in most_similars:
+        print(similar_movie.title)
