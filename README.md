@@ -100,7 +100,7 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
 
     This will create a new resource group, and create the PostgreSQL Flexible server inside that group.
 
-1. Because th example Python scripts provided read confiruation variables from a .env file located in the directory from where you invoke the scripts, once the deployment is complete, run this command to copy the `azd` environment variables into your local `.env`:
+1. The example Python scripts look for configuration variables from a `.env` file located in the directory from where you invoke the scripts. You can easily create a file with the correct variables for your PostgreSQL server by running this command that copies the `azd` environment variables into your local `.env`:
 
     ```shell
     azd env get-values > .env
@@ -112,7 +112,7 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
     python examples/sqlalchemy_async.py
     ```
 
-    Note that each of the script starts off with a `CREATE EXTENSION vector;` command, which will install the pgvector extension into the database. Once you run that once in a given database, you do not need to run it again for the exact same database.
+    Note that each of the script starts off with a `CREATE EXTENSION vector;` command, which will install the pgvector extension into the database. Once you run that once in a given database, you do not need to run it again for that particular database.
 
 ## Example scripts
 
