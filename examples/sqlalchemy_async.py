@@ -25,6 +25,7 @@ class Item(Base):
 async def insert_objects(async_session: async_sessionmaker[AsyncSession]) -> None:
     async with async_session() as session:
         async with session.begin():
+            # Insert three vectors as three separate rows in the items table
             session.add_all(
                 [
                     Item(embedding=[1, 2, 3]),
@@ -39,22 +40,24 @@ async def select_and_update_objects(
 ) -> None:
     async with async_session() as session:
         # Find 2 closest vectors to [3, 1, 2]
-        closest = await session.scalars(select(Item).order_by(Item.embedding.l2_distance([3, 1, 2])).limit(2))
-        for item in closest:
-            print(item.embedding)
+        closest_items = await session.scalars(select(Item).order_by(Item.embedding.l2_distance([3, 1, 2])).limit(2))
+        print("Two closest vectors to [3, 1, 2] in table items:")
+        for item in closest_items:
+            print(f"\t{item.embedding}")
 
         # Calculate distance between [3, 1, 2] and the first vector
         distance = (await session.scalars(select(Item.embedding.l2_distance([3, 1, 2])))).first()
-        print(distance)
+        print(f"Distance between [3, 1, 2] vector and the one closest to it: {distance}")
 
         # Find vectors within distance 5 from [3, 1, 2]
-        close_enough = await session.scalars(select(Item).filter(Item.embedding.l2_distance([3, 1, 2]) < 5))
-        for item in close_enough:
-            print(item.embedding)
+        close_enough_items = await session.scalars(select(Item).filter(Item.embedding.l2_distance([3, 1, 2]) < 5))
+        print("Vectors within a distance of 5 from [3, 1, 2]:")
+        for item in close_enough_items:
+            print(f"\t{item.embedding}")
 
         # Calculate average of all vectors
         avg_embedding = (await session.scalars(select(func.avg(Item.embedding)))).first()
-        print(avg_embedding)
+        print(f"Average of all vectors: {avg_embedding}")
 
 
 async def async_main() -> None:
@@ -87,9 +90,11 @@ async def async_main() -> None:
     async_session = async_sessionmaker(engine, expire_on_commit=False)
 
     async with engine.begin() as conn:
-        # run sql create extension vector
+        # Create pgvector extension
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        # Drop all tables defined in this model from the database, if they already exist
         await conn.run_sync(Base.metadata.drop_all)
+        # Create all tables defined in this model in the database
         await conn.run_sync(Base.metadata.create_all)
 
     await insert_objects(async_session)
