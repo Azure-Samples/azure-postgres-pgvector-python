@@ -44,17 +44,18 @@ engine = create_engine(DATABASE_URI, echo=False)
 
 # Create pgvector extension
 with engine.begin() as conn:
-    conn.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
-    
-# Create tables in database
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+# Drop all tables defined in this model from the database, if they already exist
 Base.metadata.drop_all(engine)
+# Create all tables defined in this model in the database
 Base.metadata.create_all(engine)
 
 # Insert data and issue queries
 with Session(engine) as session:
-    # Define HNSW index to support cosine similarity search through the vector_cosine_ops access method. The SQL operator for cosine distance is written as <=>.
+    # Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
     index = Index(
-        "hnsw_index",
+        "hnsw_index_for_cosine_distance_similarity_search",
         Movie.title_vector,
         postgresql_using="hnsw",
         postgresql_with={"m": 16, "ef_construction": 64},
@@ -74,7 +75,7 @@ with Session(engine) as session:
             session.add(movie)
         session.commit()
 
-    # Query for our target movie, the one whose title matches "Winnie the Pooh"
+    # Query for target movie, the one whose title matches "Winnie the Pooh"
     query = select(Movie).where(Movie.title == "Winnie the Pooh")
     target_movie = session.execute(query).scalars().first()
     if target_movie is None:
@@ -85,5 +86,6 @@ with Session(engine) as session:
     most_similars = session.scalars(
         select(Movie).order_by(Movie.title_vector.cosine_distance(target_movie.title_vector)).limit(5)
     )
-    for similar_movie in most_similars:
-        print(similar_movie.title)
+    print(f"Five most similar movies to '{target_movie.title}':")
+    for movie in most_similars:
+        print(f"\t{movie.title}")
