@@ -20,6 +20,14 @@ class Movie(Base):
     title: Mapped[str] = mapped_column()
     title_vector = mapped_column(Vector(1536))  # ada-002 is 1536-dimensional
 
+# Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
+index = Index(
+    "hnsw_index_for_cosine_distance_similarity_search",
+    Movie.title_vector,
+    postgresql_using="hnsw",
+    postgresql_with={"m": 16, "ef_construction": 64},
+    postgresql_ops={"title_vector": "vector_cosine_ops"},
+)
 
 # Connect to the database based on environment variables
 load_dotenv(".env", override=True)
@@ -46,24 +54,13 @@ engine = create_engine(DATABASE_URI, echo=False)
 with engine.begin() as conn:
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
-# Drop all tables defined in this model from the database, if they already exist
+# Drop all tables (and indexes) defined in this model from the database, if they already exist
 Base.metadata.drop_all(engine)
-# Create all tables defined in this model in the database
+# Create all tables (and indexes) defined for this model in the database
 Base.metadata.create_all(engine)
 
 # Insert data and issue queries
 with Session(engine) as session:
-    # Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
-    index = Index(
-        "hnsw_index_for_cosine_distance_similarity_search",
-        Movie.title_vector,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"title_vector": "vector_cosine_ops"},
-    )
-
-    # Create the HNSW index
-    index.create(engine)
 
     # Insert the movies from the JSON file
     current_directory = Path(__file__).parent
@@ -84,8 +81,9 @@ with Session(engine) as session:
 
     # Find the 5 most similar movies to "Winnie the Pooh"
     most_similars = session.scalars(
-        select(Movie).order_by(Movie.title_vector.cosine_distance(target_movie.title_vector)).limit(5)
-    )
+        select(Movie).order_by(
+            Movie.title_vector.cosine_distance(target_movie.title_vector)
+        ).limit(5))
     print(f"Five most similar movies to '{target_movie.title}':")
     for movie in most_similars:
         print(f"\t{movie.title}")
