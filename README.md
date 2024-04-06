@@ -116,15 +116,6 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
 
 ## Example scripts
 
-The `examples` folder contains example Python scripts that demonstrate how to use pgvector, based on the [pgvector sample code](https://github.com/pgvector/pgvector-python).
+python3 -m pip install -e src
 
-| Script | Dependencies | Description |
-|--------|--------------|-------------|
-| [`sqlalchemy_async.py`](./examples/sqlalchemy_async.py) | `asyncpg`, `sqlalchemy`, `pgvector` | Uses pgvector with SQLAlchemy and asyncpg for a simple 3-dimension vector. |
-| [`sqlalchemy_items.py`](./examples/sqlalchemy_items.py) | `psycopg2`, `sqlalchemy`, `pgvector` | Uses pgvector with SQLAlchemy and psycopg2 for a simple 3-dimension vector. |
-| [`sqlalchemy_movies.py`](./examples/sqlalchemy_movies.py) | `psycopg2`, `sqlalchemy`, `pgvector` | Uses pgvector with SQLAlchemy and psycopg2 for 1536-dimension vectors calculated previously with OpenAI's text-embedding-ada-002 model. |
-| [`sqlmodel_items.py`](./examples/sqlmodel_items.py) | `sqlmodel`, `pgvector` | Uses pgvector with SQLModel for a simple 3-dimension vector. |
-| [`asyncpg_items.py`](./examples/asyncpg_items.py) | `asyncpg`, `pgvector` | Uses pgvector with asyncpg for a simple 3-dimension vector. |
-| [`psycopg_items.py`](./examples/psycopg_items.py) | `psycopg2`, `pgvector` | Uses pgvector with psycopg2 for a simple 3-dimension vector. |
-
-Let us know if there are any other examples you would like to see!
+python3 -m uvicorn fastapi_app:app --reload --port=8000

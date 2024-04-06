@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
+from pathlib import Path
 
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import func, select, text
+from sqlalchemy import Index, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -18,46 +20,72 @@ class Base(DeclarativeBase):
 
 class Item(Base):
     __tablename__ = "items"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    embedding = mapped_column(Vector(3))
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    type: Mapped[str] = mapped_column()
+    brand: Mapped[str] = mapped_column()
+    name: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column()
+    price: Mapped[float] = mapped_column()
+    embedding = mapped_column(Vector(1536))
 
 
 async def insert_objects(async_session: async_sessionmaker[AsyncSession]) -> None:
     async with async_session() as session:
         async with session.begin():
-            # Insert three vectors as three separate rows in the items table
-            session.add_all(
-                [
-                    Item(embedding=[1, 2, 3]),
-                    Item(embedding=[-1, 1, 3]),
-                    Item(embedding=[0, -1, -2]),
-                ]
-            )
+
+            # Insert the movies from the JSON file
+            current_directory = Path(__file__).parent
+            data_path = current_directory / "catalog.json"
+            with open(data_path) as f:
+                catalog_items = json.load(f)
+                for catalog_item in catalog_items:
+                    item = Item(
+                        id=catalog_item["Id"],
+                        type=catalog_item["Type"],
+                        brand=catalog_item["Brand"],
+                        name=catalog_item["Name"],
+                        description=catalog_item["Description"],
+                        price=catalog_item["Price"],
+                        embedding=catalog_item["Embedding"],
+                    )
+                    session.add(item)
+                await session.commit()
 
 
 async def select_and_update_objects(
     async_session: async_sessionmaker[AsyncSession],
 ) -> None:
     async with async_session() as session:
-        # Find 2 closest vectors to [3, 1, 2]
-        closest_items = await session.scalars(select(Item).order_by(Item.embedding.l2_distance([3, 1, 2])).limit(2))
-        print("Two closest vectors to [3, 1, 2] in table items:")
-        for item in closest_items:
-            print(f"\t{item.embedding}")
 
-        # Calculate distance between [3, 1, 2] and the first vector
-        distance = (await session.scalars(select(Item.embedding.l2_distance([3, 1, 2])))).first()
-        print(f"Distance between [3, 1, 2] vector and the one closest to it: {distance}")
+        # Query for target movie, the one whose title matches "Winnie the Pooh"
+        query = select(Item).where(Item.name == "LumenHead Headlamp")
+        target_item = (await session.execute(query)).scalars().first()
+        if target_item is None:
+            print("Movie not found")
+            exit(1)
 
-        # Find vectors within distance 5 from [3, 1, 2]
-        close_enough_items = await session.scalars(select(Item).filter(Item.embedding.l2_distance([3, 1, 2]) < 5))
-        print("Vectors within a distance of 5 from [3, 1, 2]:")
-        for item in close_enough_items:
-            print(f"\t{item.embedding}")
+        # Find the 5 most similar movies to "Winnie the Pooh"
+        most_similars = await session.scalars(
+            select(Item).order_by(Item.embedding.cosine_distance(target_item.embedding)).limit(5)
+        )
+        print(f"Five most similar items to '{target_item.name}':")
+        for item in most_similars:
+            print(f"\t{item.name}")
 
-        # Calculate average of all vectors
-        avg_embedding = (await session.scalars(select(func.avg(Item.embedding)))).first()
-        print(f"Average of all vectors: {avg_embedding}")
+
+def create_index(conn):
+    # Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
+    index = Index(
+        "hnsw_index_for_cosine_distance_similarity_search",
+        Item.embedding,
+        postgresql_using="hnsw",
+        postgresql_with={"m": 16, "ef_construction": 64},
+        postgresql_ops={"embedding": "vector_cosine_ops"},
+    )
+
+    # Create the HNSW index
+    index.drop(conn, checkfirst=True)
+    index.create(conn)
 
 
 async def async_main() -> None:
@@ -96,6 +124,9 @@ async def async_main() -> None:
         await conn.run_sync(Base.metadata.drop_all)
         # Create all tables defined in this model in the database
         await conn.run_sync(Base.metadata.create_all)
+
+        # Create the HNSW index
+        await conn.run_sync(create_index)
 
     await insert_objects(async_session)
     await select_and_update_objects(async_session)

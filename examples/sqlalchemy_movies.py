@@ -14,11 +14,15 @@ class Base(DeclarativeBase):
     pass
 
 
-class Movie(Base):
-    __tablename__ = "movies"
+class Item(Base):
+    __tablename__ = "items"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    title: Mapped[str] = mapped_column()
-    title_vector = mapped_column(Vector(1536))  # ada-002 is 1536-dimensional
+    type: Mapped[str] = mapped_column()
+    brand: Mapped[str] = mapped_column()
+    name: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column()
+    price: Mapped[float] = mapped_column()
+    embedding = mapped_column(Vector(1536))
 
 
 # Connect to the database based on environment variables
@@ -56,36 +60,45 @@ with Session(engine) as session:
     # Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
     index = Index(
         "hnsw_index_for_cosine_distance_similarity_search",
-        Movie.title_vector,
+        Item.embedding,
         postgresql_using="hnsw",
         postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"title_vector": "vector_cosine_ops"},
+        postgresql_ops={"embedding": "vector_cosine_ops"},
     )
 
     # Create the HNSW index
+    index.drop(engine, checkfirst=True)
     index.create(engine)
 
     # Insert the movies from the JSON file
     current_directory = Path(__file__).parent
-    data_path = current_directory / "movies_ada002.json"
+    data_path = current_directory / "catalog.json"
     with open(data_path) as f:
-        movies = json.load(f)
-        for title, title_vector in movies.items():
-            movie = Movie(title=title, title_vector=title_vector)
-            session.add(movie)
+        catalog_items = json.load(f)
+        for catalog_item in catalog_items:
+            item = Item(
+                id=catalog_item["Id"],
+                type=catalog_item["Type"],
+                brand=catalog_item["Brand"],
+                name=catalog_item["Name"],
+                description=catalog_item["Description"],
+                price=catalog_item["Price"],
+                embedding=catalog_item["Embedding"],
+            )
+            session.add(item)
         session.commit()
 
     # Query for target movie, the one whose title matches "Winnie the Pooh"
-    query = select(Movie).where(Movie.title == "Winnie the Pooh")
-    target_movie = session.execute(query).scalars().first()
-    if target_movie is None:
+    query = select(Item).where(Item.name == "LumenHead Headlamp")
+    target_item = session.execute(query).scalars().first()
+    if target_item is None:
         print("Movie not found")
         exit(1)
 
     # Find the 5 most similar movies to "Winnie the Pooh"
     most_similars = session.scalars(
-        select(Movie).order_by(Movie.title_vector.cosine_distance(target_movie.title_vector)).limit(5)
+        select(Item).order_by(Item.embedding.cosine_distance(target_item.embedding)).limit(5)
     )
-    print(f"Five most similar movies to '{target_movie.title}':")
-    for movie in most_similars:
-        print(f"\t{movie.title}")
+    print(f"Five most similar items to '{target_item.name}':")
+    for item in most_similars:
+        print(f"\t{item.name}")
