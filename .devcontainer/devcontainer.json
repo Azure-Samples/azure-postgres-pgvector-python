@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.245.0/containers/python-3
 {
-	"name": "python-db-copilot",
+	"name": "azure-postgres-pgvector-python",
 	"dockerComposeFile": "docker-compose.yaml",
 	"service": "app",
 	"workspaceFolder": "/workspace",
@@ -35,7 +35,7 @@
 				"[python]": {
 					"editor.formatOnSave": true,
 					"editor.codeActionsOnSave": {
-						"source.fixAll": true
+						"source.fixAll": "explicit"
 					},
 					"editor.defaultFormatter": "ms-python.black-formatter"
 				},
@@ -54,8 +54,8 @@
 						"driver": "PostgreSQL",
 						"server": "<HOSTNAME>.postgres.database.azure.com",
 						"port": 5432,
-						"database": "postgres",
-						"username": "<USERNAME>",
+						"database": "db",
+						"username": "UserRole",
 						"askForPassword": true,
 						"pgOptions": {
 							"ssl": true
