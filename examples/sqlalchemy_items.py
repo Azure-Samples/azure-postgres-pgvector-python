@@ -17,6 +17,14 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     embedding = mapped_column(Vector(3))
 
+# Define HNSW index to support vector similarity search through the vector_l2_ops access method (Euclidean distance). The SQL operator for Euclidean distance is written as <->.
+index = Index(
+    "hnsw_index_for_euclidean_distance_similarity_search",
+    Item.embedding,
+    postgresql_using="hnsw",
+    postgresql_with={"m": 16, "ef_construction": 64},
+    postgresql_ops={"embedding": "vector_l2_ops"},
+)
 
 # Connect to the database based on environment variables
 load_dotenv(".env", override=True)
@@ -43,24 +51,13 @@ engine = create_engine(DATABASE_URI, echo=False)
 with engine.begin() as conn:
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
-# Drop all tables defined in this model from the database, if they already exist
+# Drop all tables (and indexes) defined in this model from the database, if they already exist
 Base.metadata.drop_all(engine)
-# Create all tables defined in this model in the database
+# Create all tables (and indexes) defined for this model in the database
 Base.metadata.create_all(engine)
 
 # Insert data and issue queries
 with Session(engine) as session:
-    # Define HNSW index to support vector similarity search through the vector_l2_ops access method (Euclidean distance). The SQL operator for Euclidean distance is written as <->.
-    index = Index(
-        "hnsw_index_for_euclidean_distance_similarity_search",
-        Item.embedding,
-        postgresql_using="hnsw",
-        postgresql_with={"m": 16, "ef_construction": 64},
-        postgresql_ops={"embedding": "vector_l2_ops"},
-    )
-
-    # Create the HNSW index
-    index.create(engine)
 
     # Insert three vectors as three separate rows in the items table
     session.add_all(
