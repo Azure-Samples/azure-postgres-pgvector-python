@@ -11,11 +11,6 @@ param location string
 
 param resourceGroupName string = ''
 
-@secure()
-param administratorLogin string
-@secure()
-param administratorLoginPassword string
-
 @description('The Object ID of the Azure AD admin.')
 param aadAdminObjectid string
 
@@ -48,11 +43,15 @@ module pg 'pg.bicep' = {
     name: '${prefix}-postgresql'
     location: location
     tags: tags
-    administratorLogin: administratorLogin
+    authType: 'EntraOnly'
     aadAdminObjectid: aadAdminObjectid
     aadAdminName: aadAdminName
     aadAdminType: aadAdminType
     databaseNames: [ databaseName ]
+    storage: {
+      storageSizeGB: 128
+    }
+    version: '15'
     allowAllIPsFirewall: true
   }
 }
