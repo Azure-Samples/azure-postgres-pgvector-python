@@ -53,14 +53,14 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-pr
   name: name
   location: location
   tags: tags
-
+  sku: {
+    name: 'Standard_B1ms'
+    tier: 'Burstable'
+  }
   properties: union(authProperties, {
     version: version
     storage: storage
-    sku: {
-      name: 'Standard_D2ds_v4'
-      tier: 'GeneralPurpose'
-    }
+    
     highAvailability: {
       mode: 'Disabled'
     }
