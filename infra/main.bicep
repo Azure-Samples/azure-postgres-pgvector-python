@@ -49,7 +49,7 @@ module pg 'pg.bicep' = {
     aadAdminType: aadAdminType
     databaseNames: [ databaseName ]
     storage: {
-      storageSizeGB: 128
+      storageSizeGB: 32
     }
     version: '15'
     allowAllIPsFirewall: true
