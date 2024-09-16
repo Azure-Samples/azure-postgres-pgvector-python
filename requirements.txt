@@ -1,7 +1,7 @@
 psycopg2==2.9.9
 python-dotenv==1.0.1
 SQLAlchemy[asyncio]==2.0.31
-pgvector==0.3.0
+pgvector==0.3.3
 SQLModel==0.0.19
 asyncpg==0.29.0
 azure-identity
