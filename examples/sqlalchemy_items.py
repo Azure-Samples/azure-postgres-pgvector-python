@@ -17,6 +17,7 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     embedding = mapped_column(Vector(3))
 
+
 # Define HNSW index to support vector similarity search through the vector_l2_ops access method (Euclidean distance). The SQL operator for Euclidean distance is written as <->.
 index = Index(
     "hnsw_index_for_euclidean_distance_similarity_search",
