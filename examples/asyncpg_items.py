@@ -23,6 +23,9 @@ async def async_main():
         POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
 
     DATABASE_URI = f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DATABASE}"
+    # Specify SSL mode if needed
+    if POSTGRES_SSL := os.environ.get("POSTGRES_SSL"):
+        DATABASE_URI += f"?sslmode={POSTGRES_SSL}"
 
     conn = await asyncpg.connect(DATABASE_URI)
 

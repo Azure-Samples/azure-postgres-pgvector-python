@@ -100,10 +100,10 @@ Follow these steps to deploy a PostgreSQL Flexible Server to Azure with the pgve
 
     This will create a new resource group, and create the PostgreSQL Flexible server inside that group.
 
-1. The example Python scripts look for configuration variables from a `.env` file located in the directory from where you invoke the scripts. You can easily create a file with the correct variables for your PostgreSQL server by running this command that copies the `azd` environment variables into your local `.env`:
+1. The example Python scripts look for configuration variables from a `.env` file located in the directory from where you invoke the scripts. You can easily create a file with the correct variables for your PostgreSQL server by running this script that copies the necessary `azd` environment variables into your local `.env`:
 
     ```shell
-    azd env get-values > .env
+    ./write_azure_env.sh
     ```
 
 1. Now you may run the Python scripts in order to interact with the PostgreSQL server.
