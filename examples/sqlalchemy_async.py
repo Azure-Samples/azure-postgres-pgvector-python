@@ -21,6 +21,7 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     embedding = mapped_column(Vector(3))
 
+
 # Define HNSW index to support vector similarity search through the vector_l2_ops access method (Euclidean distance). The SQL operator for Euclidean distance is written as <->.
 index = Index(
     "hnsw_index_for_euclidean_distance_similarity_search",
@@ -29,6 +30,7 @@ index = Index(
     postgresql_with={"m": 16, "ef_construction": 64},
     postgresql_ops={"embedding": "vector_l2_ops"},
 )
+
 
 async def insert_objects(async_session: async_sessionmaker[AsyncSession]) -> None:
     async with async_session() as session:

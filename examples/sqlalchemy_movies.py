@@ -20,6 +20,7 @@ class Movie(Base):
     title: Mapped[str] = mapped_column()
     title_vector = mapped_column(Vector(1536))  # ada-002 is 1536-dimensional
 
+
 # Define HNSW index to support vector similarity search through the vector_cosine_ops access method (cosine distance). The SQL operator for cosine distance is written as <=>.
 index = Index(
     "hnsw_index_for_cosine_distance_similarity_search",
@@ -81,9 +82,8 @@ with Session(engine) as session:
 
     # Find the 5 most similar movies to "Winnie the Pooh"
     most_similars = session.scalars(
-        select(Movie).order_by(
-            Movie.title_vector.cosine_distance(target_movie.title_vector)
-        ).limit(5))
+        select(Movie).order_by(Movie.title_vector.cosine_distance(target_movie.title_vector)).limit(5)
+    )
     print(f"Five most similar movies to '{target_movie.title}':")
     for movie in most_similars:
         print(f"\t{movie.title}")
