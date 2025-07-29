@@ -1,6 +1,6 @@
 psycopg2==2.9.10
 python-dotenv==1.0.1
-SQLAlchemy[asyncio]==2.0.37
+SQLAlchemy[asyncio]==2.0.41
 pgvector==0.4.1
 SQLModel==0.0.24
 asyncpg==0.30.0
